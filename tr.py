@@ -52,10 +52,10 @@ def main():
             incl_sec = True
         else:
             incl_sec = False 
-        sort_by = input("Sort by (kills/kd/secunde) : ")
+        sort_by = input("Sort by (kills/scor/secunde) : ")
         if sort_by.lower().strip() == "kills":
             sort_by_kills = True
-        elif sort_by.lower().strip() == "kd":
+        elif sort_by.lower().strip() == "scor":
             sort_by_kd = True
         elif sort_by.lower().strip() == "secunde":
             sort_by_secunde = True
@@ -111,9 +111,9 @@ def main():
         #print("Sorted: ",res)
         with open(f"final{gang}{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", "a+") as f:
                         if incl_sec:
-                            f.write(f"Nume Kills KD Secunde \n")
+                            f.write(f"Nume Kills Scor Secunde \n")
                         else:
-                            f.write(f"Nume Kills KD \n")
+                            f.write(f"Nume Kills Scor \n")
                         for u in res:
                             try:
                                 news = str(u[1].values()).lstrip("dict_values([)").rstrip("])")
