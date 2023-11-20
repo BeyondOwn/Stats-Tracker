@@ -34,15 +34,9 @@ parse_war_gangs={
 
 def main():
     try:
-        links_missing = False
         date_counter = 1
         incl_sec = False
         date_arr = []
-        lista_invoiri = []
-        lista_inactivitati = []
-        cnt=0
-        asd = []
-        turf_names=[]
         sort_by_kills = False
         sort_by_kd = False
         sort_by_secunde = False
@@ -75,45 +69,30 @@ def main():
         else:
             links.sort()
             print("Links: ",links)
-            
-            asd = parse_war(parse_war_gangs[gang.lower()],links,lista_invoiri,lista_inactivitati)
 
-            lista_invoiri = asd[0]
-            lista_inactivitati = asd[1]
-            ## got the wars/wars1..wars2..etc
+            ##Writing Wars1,Wars2.csv to wars/ Folder
+            parse_war(parse_war_gangs[gang.lower()],links)
 
-            
-                
-            player_stats = todo(len(links),lista_invoiri,lista_inactivitati)
-            ### Got the scrapper working and into a .csv, now work on the CSV
-            # print("invoiri: ",lista_invoiri)
-            # print("inactivitati: ",lista_inactivitati)
-            # print("PLAYER STATS: ",player_stats)
-            with open(f"evidente/evidenta.csv", "a+") as f:
-                        for xy in player_stats:
-                            try:
-                                name,kills,kd,secunde =player_stats[xy].values()
-                                f.write(f'{name} {kills} {kd} {secunde}\n')
-                            except ValueError:
-                                f.write(f"Couldn't unpack values! \n")
-            date_counter +=1
+            ## Adding up all Stats from wars1,wars2.etc to 1 dictionary
+            player_stats = todo(len(links))
 
-        final_player_stats = final_add()
-        #print("Final player stats:",final_player_stats)
-        
-        if (sort_by_kills == True):
-            res = sorted(final_player_stats.items(), key = lambda x: int(x[1]['kills']),reverse=True)
-        elif (sort_by_kd == True):
-            res = sorted(final_player_stats.items(), key = lambda x: int(x[1]['kd']),reverse=True)
-        elif (sort_by_secunde == True):
-            res = sorted(final_player_stats.items(), key = lambda x: int(x[1]['secunde']),reverse=True)
-        ##
-        #print("Sorted: ",res)
-        with open(f"final{gang}{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", "a+") as f:
+            ## Got the player_stats from all wars into a nested dict, now we sort them
+            if (sort_by_kills == True):
+                res = sorted(player_stats.items(), key = lambda x: int(x[1]['kills']),reverse=True)
+            elif (sort_by_kd == True):
+                res = sorted(player_stats.items(), key = lambda x: int(x[1]['kd']),reverse=True)
+            elif (sort_by_secunde == True):
+                res = sorted(player_stats.items(), key = lambda x: int(x[1]['secunde']),reverse=True)
+
+            ### Writing the sorted player_stats to file
+            with open(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", "a+") as f:
+                        f.write(f"Number of Wars: {len(links)}\n")
+                        f.write("\n")
                         if incl_sec:
                             f.write(f"Nume Kills Scor Secunde \n")
                         else:
                             f.write(f"Nume Kills Scor \n")
+                        
                         for u in res:
                             try:
                                 news = str(u[1].values()).lstrip("dict_values([)").rstrip("])")
@@ -129,41 +108,9 @@ def main():
                                     f.write(f'{name} {kills} {kd}\n')
                             except ValueError:
                                 f.write(f"Couldn't unpack values! \n")
+            date_counter +=1
         print("### DONE ###")
-        
-        ### Got them from 4 csvs into 1 csv and now export to excel ###
-        # df = pd.read_csv(txt_file, sep=" ",)
-        # df.to_excel("color.xlsx",startcol=coloana_inceput,columns=["Nume","Scor","Secunde","Prezenta"])
-        # match len(links):
-        #     case 1:
-        #         writer = ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
-        #         wb  = writer.book
-        #         df = read_csv("evidenta.csv", sep=" ", names=["Nume","Kills","Scor","Secunde",'a', 'b', 'c', 'd', 'f', 'g' ,'i','k', 'y' ,'z',"sanctiuneScor","sanctiunePrezenta","x",])
-        #         df.to_excel(writer,index=False, columns=["Nume","Kills","Scor","Secunde",'a', 'b', 'c', 'd', 'f', 'g','i','k', 'y' ,'z',"sanctiuneScor","sanctiunePrezenta","x"], header=["Nume","Kills","Scor","Secunde","","","","","","","","","","sanctiuneScor","sanctiunePrezenta","",""])
-        #         wb.save(f'{gang}{date}.xlsx')
-        #         wb.close()
-        #     case 2:
-        #         writer = ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
-        #         wb  = writer.book
-        #         df = read_csv("evidenta.csv", sep=" ", names=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2",'a', 'b', 'c', 'd', 'f', 'g' ,"sanctiuneScor","sanctiunePrezenta","x",])
-        #         df.to_excel(writer,index=False, columns=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2",'a', 'b', 'c', 'd', 'f', 'g',"sanctiuneScor","sanctiunePrezenta","x"], header=["Nume","Kills","Scor","Secunde","Kills","Scor","Secunde","","","","","","","sanctiuneScor","sanctiunePrezenta","",])
-        #         wb.save(f'{gang}{date}.xlsx')
-        #         wb.close()
-        #     case 3:
-        #         writer = ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
-        #         wb  = writer.book
-        #         df = read_csv("evidenta.csv", sep=" ", names=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2","Kills3","Scor3","Secunde3",'a','b','c',"sanctiuneScor","sanctiunePrezenta","x"])
-        #         df.to_excel(writer,index=False, columns=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2","Kills3","Scor3","Secunde3","a","b","c",'sanctiuneScor',"sanctiunePrezenta","x"], header=["Nume","Kills","Scor","Secunde","Kills","Scor","Secunde","Kills","Scor","Secunde","","","","sanctiuneScor","sanctiunePrezenta","",])
-        #         wb.save(f'{gang}{date}.xlsx')
-        #         wb.close()
-        #     case 4:
-        #         writer = ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
-        #         wb  = writer.book
-        #         df = read_csv("evidenta.csv", sep=" ", names=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2","Kills3","Scor3","Secunde3","Kills4","Scor4","Secunde4",'sanctiuneScor',"sanctiunePrezenta"])
-        #         df.to_excel(writer,index=True, index_label="Nume", columns=["Nume","Kills","Scor","Secunde","Kills2","Scor2","Secunde2","Kills3","Scor3","Secunde3","Kills4","Scor4","Secunde4",'sanctiuneScor',"sanctiunePrezenta"], header=["Kills","Scor","Secunde","Kills","Scor","Secunde","Kills","Scor","Secunde","Kills","Scor","Secunde",'sanctiuneScor',"sanctiunePrezenta","",])
-        #         wb.save(f'{gang}{date}.xlsx')
-        #         wb.close()
-        
+
         # CLEANUP ###
         cleanup()
     except Exception:
@@ -172,51 +119,11 @@ def main():
         cleanup()
 
 
-def final_add():
-    path = os.listdir(os.getcwd()+"/evidente")
-    names = set()
-    player_stats = {}
-    csv_path = []
-    for x in path:
-        if x.endswith(f".csv"):
-            csv_path.append(f"evidente/{x}")
-
-    with fileinput.input(files=csv_path, encoding="utf-8") as f:
-        for line in f:
-            filename = f.filename()
-            name,kills,kd,secunde = line.strip('\n').split(" ")
-            if name not in names:
-                player = {
-                "name":name,
-                "kills":kills,
-                "kd":kd,
-                "secunde":secunde
-                }
-                names.add(name)
-                player_stats[name] = player.copy()
-                    
-            else:
-                player_stats[name].update({
-                    f"kills":int(player_stats[name]['kills'])+int(kills),
-                    f"kd":int(player_stats[name]['kd'])+int(kd),
-                    f"secunde":int(player_stats[name]['secunde'])+int(secunde),
-                })
-                        
-                   
-    # print(player_stats)
-    return player_stats
-
 # CLEANUP ###
 def cleanup():
     path_wars_OS = os.getcwd() +"/wars"
     path_wars = os.listdir(os.getcwd()+ "/wars")
-    path_evd_OS = os.getcwd() +"/evidente"
-    path_evd= os.listdir(os.getcwd()+ "/evidente")
-    path_OS = os.getcwd()
-    path = os.listdir(os.getcwd())
-    for x  in path_evd:
-        if x.endswith(".csv"):
-            os.remove(f"{path_evd_OS}/{x}")
+
     for x in path_wars:
         if x.endswith(".csv"):
             os.remove(f"{path_wars_OS}/{x}")
@@ -225,13 +132,7 @@ def cleanup():
 def on_exit(signal_type):
     path_wars_OS = os.getcwd() +"/wars"
     path_wars = os.listdir(os.getcwd()+ "/wars")
-    path_evd_OS = os.getcwd() +"/evidente"
-    path_evd= os.listdir(os.getcwd()+ "/evidente")
-    path_OS = os.getcwd()
-    path = os.listdir(os.getcwd())
-    for x  in path_evd:
-        if x.endswith(".csv"):
-            os.remove(f"{path_evd_OS}/{x}")
+    
     for x in path_wars:
         if x.endswith(".csv"):
             os.remove(f"{path_wars_OS}/{x}")
@@ -276,7 +177,7 @@ def parse_stats(atac_or_defend_players,player_stats,cnt):
     return all_elements
         
             
-def parse_war(gang,link,lista_invoiri,lista_inactivitati):
+def parse_war(gang,link):
     true_elements = {}
     attacker = False
     defender = False
@@ -350,9 +251,6 @@ def parse_war(gang,link,lista_invoiri,lista_inactivitati):
             cnt+=1
             
         
-    
-    return lista_invoiri,lista_inactivitati
-    print("######################################################################################################")
     # if attacker:
     #     for x in atac_players:
     #         print(x)
@@ -434,7 +332,7 @@ def get_war_link(date_arr,gang):
     return links
                                 
 
-def todo(link_length,lista_invoiri,lista_inactivitati,min_sec1=0,min_sec2=0,min_sec3=0,min_sec4=0):
+def todo(link_length):
     names =set()
     counter = 0
     n=0
