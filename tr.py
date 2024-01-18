@@ -205,7 +205,7 @@ class MyGUI(customtkinter.CTk):
                         if incl_sec:
                             window.box1.insert("end",f"Nume Kills Scor Secunde\n")
                             #print(f"Nume Kills Scor Secunde")
-                            f.write(f"Nume  Kills  Scor  Secunde \n")
+                            f.write(f"Nume  Kills  Scor  Secunde  \n")
                         else:
                             window.box1.insert("end",f"Nume Kills Scor\n")
                             #print(f"Nume Kills Scor")
@@ -236,14 +236,13 @@ class MyGUI(customtkinter.CTk):
                         f.write("\n")
                         f.write(f"NUMBER OF WARS: {len(links)}\n")
             date_counter +=1
-        window.box1.insert("end","### DONE ###\n")
-        print("### DONE ###")
+        
         
         if incl_sec:
             writer = pd.ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
             wb  = writer.book
             df = pd.read_csv(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", sep="  ",engine="python")
-            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills,Secunde"], header=["NUME","SCOR","KILLS","SECUNDE"])
+            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills","Secunde"], header=["NUME","SCOR","KILLS","SECUNDE"])
             wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
             wb.close()
             
@@ -255,6 +254,8 @@ class MyGUI(customtkinter.CTk):
             wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
             wb.close()
 
+        window.box1.insert("end","### DONE ###\n")
+        print("### DONE ###")
         # CLEANUP ###
         cleanup()
 
@@ -294,7 +295,7 @@ class MyGUI(customtkinter.CTk):
                 tr = attacker_players.find_all('tr')
                 for x in tr:
                     a = x.find_all('a')
-                    nume_jucator = re.search(r'\/players\/general\/([\.\$\_\?@\[]*\w+[_\.@\[]*\w*[\.@\]]*\w*)"',str(a))
+                    nume_jucator = re.search(r'\/players\/general\/(.*?)"',str(a))
                     if nume_jucator:
                         atac_players.append(nume_jucator.group(1))
                     td = x.find_all('td')
@@ -320,7 +321,7 @@ class MyGUI(customtkinter.CTk):
                 tr = defender_players.find_all('tr')
                 for x in tr:
                     a = x.find_all('a')
-                    nume_jucator = re.search(r'\/players\/general\/([\.\$\_\?@\[]*\w+[_\.@\[]*\w*[\.@\]]*\w*)"',str(a))
+                    nume_jucator = re.search(r'\/players\/general\/(.*?)"',str(a))
                     if nume_jucator:
                         defend_players.append(nume_jucator.group(1))
                     td = x.find_all('td')
