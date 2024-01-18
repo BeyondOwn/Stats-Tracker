@@ -9,6 +9,7 @@ from get_date import get_date_range
 import sys
 import threading
 import customtkinter
+import pandas as pd
 
 
 view_all_gangs = {
@@ -204,11 +205,11 @@ class MyGUI(customtkinter.CTk):
                         if incl_sec:
                             window.box1.insert("end",f"Nume Kills Scor Secunde\n")
                             #print(f"Nume Kills Scor Secunde")
-                            f.write(f"Nume    Kills Scor Secunde \n")
+                            f.write(f"Nume  Kills  Scor  Secunde \n")
                         else:
                             window.box1.insert("end",f"Nume Kills Scor\n")
                             #print(f"Nume Kills Scor")
-                            f.write(f"Nume    Kills Scor \n")
+                            f.write(f"Nume  Kills  Scor \n")
                         
                         for u in res:
                             news = str(u[1].values()).lstrip("dict_values([)").rstrip("])")
@@ -233,11 +234,26 @@ class MyGUI(customtkinter.CTk):
                         window.box1.insert("end",f"Number of Wars: {len(links)}\n")
                         #print(f"Number of Wars: {len(links)}\n")
                         f.write("\n")
-                        f.write(f"Number of Wars: {len(links)}\n")
+                        f.write(f"NUMBER OF WARS: {len(links)}\n")
             date_counter +=1
         window.box1.insert("end","### DONE ###\n")
         print("### DONE ###")
         
+        if incl_sec:
+            writer = pd.ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
+            wb  = writer.book
+            df = pd.read_csv(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", sep="  ",engine="python")
+            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills,Secunde"], header=["NUME","SCOR","KILLS","SECUNDE"])
+            wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
+            wb.close()
+            
+        else:
+            writer = pd.ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
+            wb  = writer.book
+            df = pd.read_csv(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", sep="  ",engine="python")
+            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills"], header=["NUME","SCOR","KILLS"])
+            wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
+            wb.close()
 
         # CLEANUP ###
         cleanup()
