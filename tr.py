@@ -10,7 +10,8 @@ import sys
 import threading
 import customtkinter
 import pandas as pd
-
+import math
+from decimal import *
 
 view_all_gangs = {
     "ttb":"tsarbratva",
@@ -101,9 +102,9 @@ class MyGUI(customtkinter.CTk):
         self.sort_by = customtkinter.CTkLabel(self.main_frame,text="Sort By: ",font=("Roboto",24,'bold'))
         self.sort_by.grid(row=0,column=2,sticky='we')
 
-        self.sort_by_combo = customtkinter.CTkComboBox(self.main_frame,width=250,values=["Scor", "Kills", "Secunde","Prezente"],font=('Roboto',18,'bold'),dropdown_font=('Roboto',18,'bold'),dropdown_text_color='#2fa550',text_color='#2fa550')
+        self.sort_by_combo = customtkinter.CTkComboBox(self.main_frame,width=250,values=["KD","Scor", "Kills", "Secunde","Prezente"],font=('Roboto',18,'bold'),dropdown_font=('Roboto',18,'bold'),dropdown_text_color='#2fa550',text_color='#2fa550')
         self.sort_by_combo.grid(row=0,column=3)
-        self.sort_by_combo.set("Scor")
+        self.sort_by_combo.set("KD")
 
         self.secunde = customtkinter.CTkLabel(self.main_frame,text="Include Secundele: ",font=("Roboto",24,'bold'))
         self.secunde.grid(row = 1,column=2,sticky="we")
@@ -157,18 +158,21 @@ class MyGUI(customtkinter.CTk):
         date_arr = []
         sort_by_kills = False
         sort_by_secunde = False
+        sort_by_scor = False
         sort_by_kd = False
         sort_by_prezente = False
         
         match sort_by:
             case "Scor":
-                sort_by_kd = True
+                sort_by_scor = True
             case "Kills":
                 sort_by_kills = True
             case "Secunde":
                 sort_by_secunde = True
             case "Prezente":
                 sort_by_prezente = True
+            case "KD":
+                sort_by_kd = True
         date_arr = get_date_range(start_date_input,end_date_input)
         self.box.insert("end", f"{date_arr}\n")
         self.box.see("end")
@@ -200,42 +204,46 @@ class MyGUI(customtkinter.CTk):
             ## Got the player_stats from all wars into a nested dict, now we sort them
             if (sort_by_kills == True):
                 res = sorted(player_stats.items(), key = lambda x: int(x[1]['kills']),reverse=True)
-            elif (sort_by_kd == True):
-                res = sorted(player_stats.items(), key = lambda x: int(x[1]['kd']),reverse=True)
+            elif (sort_by_scor == True):
+                res = sorted(player_stats.items(), key = lambda x: int(x[1]['scor']),reverse=True)
             elif (sort_by_secunde == True):
                 res = sorted(player_stats.items(), key = lambda x: int(x[1]['secunde']),reverse=True)
             elif (sort_by_prezente == True):
                 res = sorted(player_stats.items(), key = lambda x: int(x[1]['prezente']),reverse=True)
+            elif (sort_by_kd == True):
+                res = sorted(player_stats.items(), key = lambda x: float(x[1]['kd']),reverse=True)
+           
             window = NewWindow(self.main_frame)
             ### Writing the sorted player_stats to file
             with open(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", "a+") as f:
                         if incl_sec:
-                            window.box1.insert("end",f"Nume Kills Scor Prezente Secunde\n")
+                            window.box1.insert("end",f"Nume KD Scor Kills Prezente Secunde\n")
                             #print(f"Nume Kills Scor Secunde")
-                            f.write(f"Nume  Kills  Scor  Prezente  Secunde  \n")
+                            f.write(f"Nume  KD  Scor  Kills  Prezente  Secunde  \n")
                         else:
-                            window.box1.insert("end",f"Nume Kills Scor Prezente\n")
+                            window.box1.insert("end",f"Nume KD Scor Kills Prezente\n")
                             #print(f"Nume Kills Scor")
-                            f.write(f"Nume  Kills  Scor  Prezente  \n")
+                            f.write(f"Nume  KD  Scor  Kills  Prezente  \n")
                         
                         for u in res:
                             news = str(u[1].values()).lstrip("dict_values([)").rstrip("])")
                             #print(news)
-                            name, kills , kd, prezente, secunde = news.split(",")
+                            name, kills , scor, kd, prezente, secunde = news.split(",")
                             name = name.lstrip("'").rstrip("'")
                             kills = kills.replace("'","")
+                            scor = scor.replace("'","")
                             kd = kd.replace("'","")
                             secunde = secunde.replace("'","")
                             prezente = prezente.replace("'","")
                             if incl_sec:
-                                window.box1.insert("end",f'{name} {kills} {kd} {prezente} {secunde}\n')
+                                window.box1.insert("end",f'{name} {kd} {scor} {kills} {prezente} {secunde}\n')
                                 #print(f'{name} {kills} {kd} {secunde}')
-                                f.write(f'{name} {kills} {kd} {prezente} {secunde} \n')
+                                f.write(f'{name} {kd} {scor} {kills} {prezente} {secunde} \n')
                                
                             else:
-                                window.box1.insert("end",f'{name} {kills} {kd} {prezente} \n')
+                                window.box1.insert("end",f'{name} {kd} {kills} {scor} {prezente} \n')
                                 #print(f'{name} {kills} {kd}')
-                                f.write(f'{name} {kills} {kd} {prezente}\n')
+                                f.write(f'{name} {kd} {scor} {kills} {prezente}\n')
                                 
                         window.box1.insert("end","\n")
                         #print("\n")
@@ -250,7 +258,7 @@ class MyGUI(customtkinter.CTk):
             writer = pd.ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
             wb  = writer.book
             df = pd.read_csv(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", sep="  ",engine="python")
-            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills","Prezente","Secunde"], header=["NUME","SCOR","KILLS","PREZENTE","SECUNDE"])
+            df.to_excel(writer,index=False, columns=["Nume","KD","Scor","Kills","Prezente","Secunde"], header=["NUME","KD","SCOR","KILLS","PREZENTE","SECUNDE"])
             wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
             wb.close()
             
@@ -258,7 +266,7 @@ class MyGUI(customtkinter.CTk):
             writer = pd.ExcelWriter('color.xlsx',mode='a', if_sheet_exists='overlay', engine='openpyxl')
             wb  = writer.book
             df = pd.read_csv(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.txt", sep="  ",engine="python")
-            df.to_excel(writer,index=False, columns=["Nume","Scor","Kills","Prezente"], header=["NUME","SCOR","KILLS","PREZENTE"])
+            df.to_excel(writer,index=False, columns=["Nume","KD","Scor","Kills","Prezente"], header=["NUME","KD","SCOR","KILLS","PREZENTE"])
             wb.save(f"{gang.upper()}_{date_arr[0]}-{date_arr[len(date_arr)-1]}.xlsx")
             wb.close()
 
@@ -439,12 +447,13 @@ class MyGUI(customtkinter.CTk):
         with fileinput.input(files=csv_path, encoding="utf-8") as f:
             for line in f:
                 filename = f.filename()
-                name,kills,kd,prezente,secunde = line.strip('\n').split(",")
+                name,kills,scor,prezente,secunde = line.strip('\n').split(",")
                 if name not in names:
                     player = {
                     "name":name,
                     "kills":kills,
-                    "kd":kd,
+                    "scor":scor,
+                    "kd":"{:.2f}".format(float(int(kills)/(int(kills)-int(scor)))) if (int(kills)-(int(scor))) != 0 else int(kills),
                     "prezente":prezente,
                     "secunde":secunde
                     }
@@ -454,11 +463,13 @@ class MyGUI(customtkinter.CTk):
                 else:
                     player_stats[name].update({
                         f"kills":int(player_stats[name]['kills'])+int(kills),
-                        f"kd":int(player_stats[name]['kd'])+int(kd),
+                        f"scor":int(player_stats[name]['scor'])+int(scor),
+                        f"kd":"{:.2f}".format(float((int(player_stats[name]['kills']) + int(kills)) / ((int(player_stats[name]['kills'])+int(kills))-(int(player_stats[name]['scor'])+int(scor)) ))) if ((int(player_stats[name]['kills'])+int(kills))-(int(player_stats[name]['scor'])+int(scor))) != 0 else int(player_stats[name]['kills'])+int(kills) ,
                         f"prezente":int(player_stats[name]['prezente'])+int(prezente),
                         f"secunde":int(player_stats[name]['secunde'])+int(secunde)
                     })
-                            
+                    
+                   
                     
         # print(player_stats)
         return player_stats
