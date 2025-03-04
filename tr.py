@@ -13,6 +13,7 @@ import pandas as pd
 import math
 from decimal import *
 
+
 view_all_gangs = {
     "ttb":"tsarbratva",
     "rdt":"reddragon",
@@ -96,7 +97,8 @@ class MyGUI(customtkinter.CTk):
         self.main_frame.grid_rowconfigure(1,weight=1)
         self.main_frame.grid_rowconfigure(2,weight=1)
         self.main_frame.grid_rowconfigure(3,weight=1)
-        self.main_frame.grid_rowconfigure(4,weight=10)
+        self.main_frame.grid_rowconfigure(4,weight=1)
+        self.main_frame.grid_rowconfigure(5,weight=10)
         
 
         self.sort_by = customtkinter.CTkLabel(self.main_frame,text="Sort By: ",font=("Roboto",24,'bold'))
@@ -133,17 +135,26 @@ class MyGUI(customtkinter.CTk):
         self.gang_entry.grid(row=2, column=1,sticky="we")
         self.gang_entry.set("rdt")
 
+        # Cookie
+        self.cookies = customtkinter.CTkLabel(self.main_frame,text="Cookie: ",font=("Roboto",24,'bold'))
+        self.cookies.grid(row=3, column=0,sticky="we")
 
-        self.button = customtkinter.CTkButton(self.main_frame,text="Start",font=("Roboto",18,'bold'),width=300,height=50, command=lambda:self.work(self.main1,self.start_entry.get(),self.end_entry.get(),self.gang_entry.get(),self.sort_by_combo.get(),self.secunde_checkbox.get()))
-        self.button.grid(row=3, columnspan=4,)
+        self.cookies_entry = customtkinter.CTkEntry(self.main_frame,font=("Roboto",18,'bold'),text_color='#2fa550')
+        self.cookies_entry.grid(row=3, column=1,sticky='we')
+
+        #Start button and process
+        self.button = customtkinter.CTkButton(self.main_frame,text="Start",font=("Roboto",18,'bold'),width=300,height=50, command=lambda:self.work(self.main1,self.start_entry.get(),self.end_entry.get(),self.gang_entry.get(),self.sort_by_combo.get(),self.secunde_checkbox.get(),self.cookies_entry.get()))
+        self.button.grid(row=4, columnspan=4,)
 
         self.box = customtkinter.CTkTextbox(self.main_frame,text_color='#2fa550',font=("Roboto",18,'bold'),activate_scrollbars=True)
-        self.box.grid(row=4, columnspan=4,sticky="wens")
+        self.box.grid(row=5, columnspan=4,sticky="wens")
+
+        
 
 
 
-    def work(self,func,start,end,gang,sort_by,incl_sec):
-        t1=threading.Thread(target=func,args=(start,end,gang,sort_by,incl_sec))
+    def work(self,func,start,end,gang,sort_by,incl_sec,cookies):
+        t1=threading.Thread(target=func,args=(start,end,gang,sort_by,incl_sec,cookies))
         t1.start()
         #t2 = threading.main_thread()
 
@@ -152,7 +163,7 @@ class MyGUI(customtkinter.CTk):
         print("test")
         print(x1,x2)
 
-    def main1(self,start_date_input,end_date_input,gang,sort_by,incl_sec):
+    def main1(self,start_date_input,end_date_input,gang,sort_by,incl_sec,cookies):
         self.box.delete("1.0",'end')
         date_counter = 1
         date_arr = []
@@ -184,7 +195,12 @@ class MyGUI(customtkinter.CTk):
             self.box.see("end")
             return
 
-        links = self.get_war_link(date_arr,view_all_gangs[gang.lower()])
+        try:
+            links = self.get_war_link(date_arr, view_all_gangs[gang.lower()], cookies)
+        except UnboundLocalError:
+            self.box.insert("end", 'Wrong Cookie Value!\n')
+            self.box.see("end")
+            return  # Stop further execution if the error occurs
         if links == []:
             self.box.insert("end",f'Gangul {gang.upper()} nu a avut waruri in data de {date_arr[0]}-{date_arr[len(date_arr)-1]}\n')
             self.box.see("end")
@@ -196,7 +212,7 @@ class MyGUI(customtkinter.CTk):
             self.box.see("end")
 
             ##Writing Wars1,Wars2.csv to wars/ Folder
-            self.parse_war(parse_war_gangs[gang.lower()],links)
+            self.parse_war(parse_war_gangs[gang.lower()],links,cookies)
 
             ## Adding up all Stats from wars1,wars2.etc to 1 dictionary
             player_stats = self.todo(len(links))
@@ -275,7 +291,7 @@ class MyGUI(customtkinter.CTk):
         # CLEANUP ###
         cleanup()
 
-    def parse_war(self,gang,link):
+    def parse_war(self,gang,link,cookies):
         true_elements = {}
         attacker = False
         defender = False
@@ -290,7 +306,9 @@ class MyGUI(customtkinter.CTk):
             player_stats.clear()
             attacker = False
             defender = False
-            r = requests.get(lin)
+            session = requests.Session()
+            session.cookies.set('bzonerpg', cookies)
+            r = session.get(lin)
             soup = BeautifulSoup(r.text,'html.parser')
             war_top = soup.find("div", class_='viewWarTop')
             a = war_top.find_all('a')
@@ -356,7 +374,7 @@ class MyGUI(customtkinter.CTk):
                 defender = False
                 cnt+=1
 
-    def get_war_link(self,date_arr,gang):
+    def get_war_link(self,date_arr,gang,cookies):
         dates=[]
         links=[]
         primul=""
@@ -366,7 +384,9 @@ class MyGUI(customtkinter.CTk):
         
         day,month,year = date_arr[0].split(".")
         # Get X where "Page 1 of X"
-        r = requests.get(f"https://www.rpg.b-zone.ro/wars/viewall/gang/{gang}")
+        session = requests.Session()
+        session.cookies.set('bzonerpg', cookies)
+        r = session.get(f"https://www.rpg.b-zone.ro/wars/viewall/gang/{gang}")
         soup = BeautifulSoup((r.text), 'html.parser')
         pagination = soup.find("span", class_="showJumper")
         rgx = re.search(r'Page 1 of ([0-9]{3})',str(pagination))
@@ -377,7 +397,9 @@ class MyGUI(customtkinter.CTk):
             pages.append(i)
         ##
         for x in pages:
-            r = requests.get(f"https://www.rpg.b-zone.ro/wars/viewall/gang/{gang}/{x}")
+            session = requests.Session()
+            session.cookies.set('bzonerpg', cookies)
+            r = session.get(f"https://www.rpg.b-zone.ro/wars/viewall/gang/{gang}/{x}")
             soup = BeautifulSoup((r.text), 'html.parser')
             self.box.insert("end",f"Page: {x}\n")
             #print("Page: ",x)
@@ -554,8 +576,10 @@ def parse_stats(atac_or_defend_players,player_stats,cnt):
         
                
         
-def get_turf(link):
-    r = requests.get(link)
+def get_turf(link,cookies):
+    session = requests.Session()
+    session.cookies.set('bzonerpg', cookies)
+    r = session.get(link)
     soup = BeautifulSoup((r.text), 'html.parser')
     war_page = soup.find("div", class_="viewWarPage")
     turf_div = war_page.find('div', style='text-align: center')
