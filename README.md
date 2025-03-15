@@ -1,6 +1,5 @@
 Download de la Releases -->>
-
-B-Zone necesita login acum pentru orice tine de waruri. 
+ 
 Instalati extensia EditThisCookie, login pe panel si copy/paste fieldul Value in StatsTracker: https://chromewebstore.google.com/detail/editthiscookie-v3/ojfebgpkimhlhcblbalbfjblapadhbol
 
 ![image](https://github.com/user-attachments/assets/3384b04b-1577-49b0-9161-da165dd806cd)
